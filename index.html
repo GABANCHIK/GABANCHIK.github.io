@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mykola Storchak — Game Developer</title>
+<meta name="description" content="Mykola Storchak — Game Developer (TypeScript / Three.js / WebGL). 2D & 3D mobile and web games, physics, WebGL UI, Capacitor, Telegram Mini Apps.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Space Grotesk has no Cyrillic, so Manrope covers Ukrainian glyphs -->
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Manrope:wght@400;500;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #07080d;
+    --bg-2: #0e1018;
+    --card: #12151f;
+    --line: #1f2433;
+    --text: #e7e9f0;
+    --muted: #8b91a5;
+    --accent: #7cf2c8;
+    --accent-2: #8a7dff;
+    --hot: #ff6b8b;
+    --radius: 16px;
+    --mono: "JetBrains Mono", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.6 "Space Grotesk", "Manrope", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  a { color: inherit; text-decoration: none; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+
+  /* Nav */
+  nav {
+    position: fixed; inset: 0 0 auto 0; z-index: 10;
+    backdrop-filter: blur(12px);
+    background: color-mix(in srgb, var(--bg) 70%, transparent);
+    border-bottom: 1px solid transparent;
+    transition: border-color .3s;
+  }
+  nav.scrolled { border-color: var(--line); }
+  nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; gap: 16px; }
+  .logo { font-family: var(--mono); font-weight: 600; letter-spacing: .02em; }
+  .logo span { color: var(--accent); }
+  .nav-right { display: flex; align-items: center; gap: 28px; }
+  nav ul { display: flex; gap: 28px; list-style: none; font-size: 14px; color: var(--muted); }
+  nav ul a:hover { color: var(--text); }
+  .lang {
+    display: inline-flex; padding: 3px; border-radius: 10px;
+    border: 1px solid var(--line); background: var(--bg-2);
+  }
+  .lang button {
+    font: 600 12px var(--mono); color: var(--muted); background: none; border: 0; cursor: pointer;
+    padding: 5px 10px; border-radius: 7px; transition: background .2s, color .2s;
+  }
+  .lang button:hover { color: var(--text); }
+  .lang button[aria-pressed="true"] { background: var(--accent); color: #04110c; }
+
+  /* Hero */
+  #hero { position: relative; height: 100vh; min-height: 620px; display: flex; align-items: center; }
+  #scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  #hero::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse at 20% 50%, rgba(7,8,13,.85) 0%, rgba(7,8,13,.3) 55%, transparent 80%),
+                linear-gradient(to bottom, transparent 70%, var(--bg));
+  }
+  .hero-content { position: relative; z-index: 2; pointer-events: none; }
+  .hero-content a { pointer-events: auto; }
+  .tag {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--mono); font-size: 13px; color: var(--accent);
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+    padding: 6px 12px; border-radius: 999px; margin-bottom: 24px;
+  }
+  .tag i { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 12px var(--accent); animation: pulse 2s infinite; }
+  @keyframes pulse { 50% { opacity: .35; } }
+  h1 { font-size: clamp(44px, 8vw, 96px); line-height: .95; letter-spacing: -.03em; font-weight: 700; }
+  h1 .grad { background: linear-gradient(90deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .role { margin-top: 20px; font-family: var(--mono); color: var(--muted); font-size: clamp(14px, 2vw, 17px); }
+  .role b { color: var(--text); font-weight: 600; }
+  .lead { margin-top: 20px; max-width: 520px; color: var(--muted); font-size: 18px; }
+  .cta { margin-top: 36px; display: flex; gap: 14px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 14px 22px; border-radius: 12px; font-weight: 500; font-size: 15px;
+    transition: transform .2s, box-shadow .2s, background .2s;
+  }
+  .btn-primary { background: var(--accent); color: #04110c; }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px -8px var(--accent); }
+  .btn-ghost { border: 1px solid var(--line); background: rgba(255,255,255,.02); }
+  .btn-ghost:hover { border-color: var(--muted); transform: translateY(-2px); }
+  .hint { position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%); z-index: 2; font-family: var(--mono); font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+  /* Sections */
+  section { padding: 110px 0; }
+  .sec-head { display: flex; align-items: baseline; gap: 16px; margin-bottom: 48px; }
+  .sec-head .num { font-family: var(--mono); color: var(--accent); font-size: 14px; }
+  h2 { font-size: clamp(30px, 4.5vw, 44px); letter-spacing: -.02em; }
+  .sec-head .rule { flex: 1; height: 1px; background: var(--line); }
+
+  /* About */
+  .about { display: grid; grid-template-columns: 1.4fr 1fr; gap: 48px; }
+  .about p { color: var(--muted); font-size: 18px; }
+  .about p + p { margin-top: 16px; }
+  .about p strong { color: var(--text); font-weight: 500; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; }
+  .stat b { display: block; font-size: 34px; letter-spacing: -.02em; }
+  .stat span { color: var(--muted); font-size: 14px; }
+
+  /* Skills */
+  .skills { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .skill {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 26px;
+    transition: border-color .25s, transform .25s;
+  }
+  .skill:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); transform: translateY(-3px); }
+  .skill h3 { font-size: 17px; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+  .skill h3 .ic { font-family: var(--mono); font-size: 12px; color: var(--accent); border: 1px solid var(--line); border-radius: 6px; padding: 2px 6px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { font-family: var(--mono); font-size: 12.5px; padding: 5px 10px; border-radius: 8px; background: var(--bg-2); border: 1px solid var(--line); color: #c9cdd9; }
+  .chip.hl { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); }
+
+  /* Experience */
+  .job { display: grid; grid-template-columns: 220px 1fr; gap: 40px; }
+  .job-meta { position: sticky; top: 100px; align-self: start; }
+  .job-meta h3 { font-size: 22px; }
+  .job-meta p { color: var(--muted); font-family: var(--mono); font-size: 13px; margin-top: 6px; }
+  .job-meta .stack { margin-top: 18px; }
+  .areas { display: grid; gap: 14px; }
+  .area { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px 26px; display: grid; grid-template-columns: 44px 1fr; gap: 16px; }
+  .area .k { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; font-size: 20px; background: var(--bg-2); border: 1px solid var(--line); }
+  .area h4 { font-size: 16px; margin-bottom: 6px; }
+  .area p { color: var(--muted); font-size: 15px; }
+
+  /* Screens showcase */
+  .screens { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 8px; }
+
+  /* Projects */
+  .projects { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+  .project {
+    position: relative; overflow: hidden;
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 28px;
+    display: flex; flex-direction: column; gap: 14px; min-height: 260px;
+    transition: transform .25s, border-color .25s;
+  }
+  .project:hover { transform: translateY(-4px); border-color: var(--accent-2); }
+  .project .label { font-family: var(--mono); font-size: 12px; color: var(--accent-2); }
+  .project h3 { font-size: 22px; }
+  .project p { color: var(--muted); font-size: 15px; flex: 1; }
+  .project .more { font-family: var(--mono); font-size: 13px; color: var(--accent); }
+  .project.feature { background: linear-gradient(135deg, color-mix(in srgb, var(--accent-2) 14%, var(--card)), var(--card) 60%); }
+
+  /* Education */
+  .edu { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .edu .stat h3 { font-size: 18px; margin-bottom: 6px; }
+  .edu .stat p { color: var(--muted); font-size: 15px; }
+
+  /* Contact */
+  #contact .box {
+    border: 1px solid var(--line); border-radius: 24px; padding: 64px 48px; text-align: center;
+    background: radial-gradient(ellipse at top, color-mix(in srgb, var(--accent) 10%, transparent), transparent 60%), var(--card);
+  }
+  #contact h2 { font-size: clamp(32px, 6vw, 60px); }
+  #contact p { color: var(--muted); margin: 14px auto 32px; max-width: 520px; font-size: 18px; }
+  .contacts { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; }
+  .copy-note { font-family: var(--mono); font-size: 12px; color: var(--accent); height: 18px; margin-top: 14px; }
+
+  footer { padding: 40px 0; color: var(--muted); font-size: 13px; font-family: var(--mono); }
+  footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+
+  /* Reveal */
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity .8s ease, transform .8s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+
+  @media (max-width: 860px) {
+    nav ul { display: none; }
+    .about, .job, .edu { grid-template-columns: 1fr; }
+    .job-meta { position: static; }
+    section { padding: 80px 0; }
+    #contact .box { padding: 48px 20px; }
+    .wrap { padding: 0 16px; }
+    .hint { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Every element with data-ua gets its innerHTML swapped when the language changes; the English original is kept in data-en at load. -->
+<nav id="nav">
+  <div class="wrap">
+    <a href="#hero" class="logo">mykola<span>.</span>dev</a>
+    <div class="nav-right">
+      <ul>
+        <li><a href="#about" data-ua="Про мене">About</a></li>
+        <li><a href="#skills" data-ua="Навички">Skills</a></li>
+        <li><a href="#experience" data-ua="Досвід">Experience</a></li>
+        <li><a href="#projects" data-ua="Проєкти">Projects</a></li>
+        <li><a href="#contact" data-ua="Контакти">Contact</a></li>
+      </ul>
+      <div class="lang" role="group" aria-label="Language">
+        <button type="button" data-lang="ua" aria-pressed="false">UA</button>
+        <button type="button" data-lang="en" aria-pressed="true">EN</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<header id="hero">
+  <canvas id="scene"></canvas>
+  <div class="wrap hero-content">
+    <div class="tag"><i></i> <span data-ua="Відкритий до нових пропозицій">Open to new opportunities</span></div>
+    <h1 data-ua="Микола<br><span class=&quot;grad&quot;>Сторчак</span>">Mykola<br><span class="grad">Storchak</span></h1>
+    <p class="role" data-ua="<b>Game Developer</b> · TypeScript / Three.js / WebGL"><b>Game Developer</b> · TypeScript / Three.js / WebGL</p>
+    <p class="lead" data-ua="Створюю 2D та 3D мобільні й веб-ігри — від фізики та геймплею до власного WebGL UI і релізу в продакшн.">I build 2D &amp; 3D mobile and web games — from physics and gameplay to custom WebGL UI and shipping to production.</p>
+    <div class="cta">
+      <a class="btn btn-primary" href="#contact" data-ua="Зв'язатися →">Get in touch →</a>
+      <a class="btn btn-ghost" href="https://github.com/GABANCHIK" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </div>
+  <div class="hint" data-ua="рухайте курсором · клікніть, щоб кинути м'яч">move the cursor · click to drop a ball</div>
+</header>
+
+<main>
+  <section id="about">
+    <div class="wrap">
+      <div class="sec-head reveal"><span class="num">01</span><h2 data-ua="Про мене">About</h2><span class="rule"></span></div>
+      <div class="about">
+        <div class="reveal">
+          <p data-ua="Геймдевелопер з <strong>~2 роками комерційного досвіду</strong> створення 2D та 3D мобільних і веб-ігор на TypeScript.">Game developer with <strong>~2 years of commercial experience</strong> building 2D and 3D mobile and web games in TypeScript.</p>
+          <p data-ua="Реалізую геймплейні механіки, фізику, ігровий UI та монетизацію від початку до кінця — від <strong>3D-сцен у Three.js</strong> і <strong>фізики на Rapier3D</strong> до <strong>власного WebGL UI-рендерера</strong>, Android-збірок на Capacitor і Telegram Mini Apps.">I implement gameplay mechanics, physics, game UI and monetization flows end to end — from <strong>3D scenes in Three.js</strong> and <strong>physics in Rapier3D</strong> to a <strong>custom WebGL UI renderer</strong>, Android builds with Capacitor, and Telegram Mini Apps.</p>
+          <p data-ua="Дбаю про плавну продуктивність, чистий Git-workflow і доставку фіч у продакшн.">I care about smooth performance, clean Git workflows and shipping features to production.</p>
+        </div>
+        <div class="stats reveal">
+          <div class="stat"><b data-ua="~2 роки">~2 yrs</b><span data-ua="комерційний геймдев">commercial gamedev</span></div>
+          <div class="stat"><b data-ua="3 роки">3 yrs</b><span data-ua="JavaScript і Git">JavaScript &amp; Git</span></div>
+          <div class="stat"><b>2D + 3D</b><span data-ua="мобільні й веб-ігри">mobile &amp; web games</span></div>
+          <div class="stat"><b>UA · EN</b><span data-ua="рідна · B1">native · B1</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="skills">
+    <div class="wrap">
+      <div class="sec-head reveal"><span class="num">02</span><h2 data-ua="Технічні навички">Technical skills</h2><span class="rule"></span></div>
+      <div class="skills">
+        <div class="skill reveal">
+          <h3><span class="ic">3D</span> <span data-ua="Ігри та графіка">Game &amp; graphics</span></h3>
+          <div class="chips"><span class="chip hl">Three.js</span><span class="chip hl">WebGL</span><span class="chip" data-ua="Власні шейдери">Custom shaders</span><span class="chip" data-ua="2D/UI-рендерер">2D/UI renderer</span><span class="chip hl">Rapier3D</span><span class="chip">Canvas</span><span class="chip" data-ua="FBX-моделі">FBX models</span><span class="chip" data-ua="Текстурні атласи">Texture atlases</span><span class="chip">VFX</span></div>
+        </div>
+        <div class="skill reveal">
+          <h3><span class="ic">TS</span> <span data-ua="Мови">Languages</span></h3>
+          <div class="chips"><span class="chip hl" data-ua="TypeScript · 2р">TypeScript · 2y</span><span class="chip" data-ua="JavaScript ES2020 · 3р">JavaScript ES2020 · 3y</span><span class="chip" data-ua="HTML5 · 3р">HTML5 · 3y</span><span class="chip" data-ua="CSS3 · 3р">CSS3 · 3y</span><span class="chip">SCSS/SASS</span><span class="chip">JSON</span></div>
+        </div>
+        <div class="skill reveal">
+          <h3><span class="ic">APP</span> <span data-ua="Мобільні платформи">Mobile &amp; platforms</span></h3>
+          <div class="chips"><span class="chip hl">Capacitor 8</span><span class="chip" data-ua="Android-збірки">Android builds</span><span class="chip" data-ua="Нативні плагіни">Native plugins</span><span class="chip hl">Telegram Mini Apps</span></div>
+        </div>
+        <div class="skill reveal">
+          <h3><span class="ic">UI</span> Frontend</h3>
+          <div class="chips"><span class="chip">React.js</span><span class="chip">React Hooks</span><span class="chip">Redux</span><span class="chip">Redux Toolkit</span><span class="chip">Redux Thunk</span><span class="chip">React Router</span><span class="chip">Firebase</span></div>
+        </div>
+        <div class="skill reveal">
+          <h3><span class="ic">API</span> <span data-ua="Інтеграція з бекендом">Backend integration</span></h3>
+          <div class="chips"><span class="chip">REST API</span><span class="chip">HTTP</span><span class="chip hl">WebSockets</span><span class="chip" data-ua="Remote-конфіги">Remote configs</span><span class="chip">Local storage</span><span class="chip" data-ua="Офлайн-режим">Offline mode</span><span class="chip" data-ua="Синхронізація прогресу">Progress sync</span></div>
+        </div>
+        <div class="skill reveal">
+          <h3><span class="ic">DATA</span> <span data-ua="Аналітика та моніторинг">Analytics &amp; monitoring</span></h3>
+          <div class="chips"><span class="chip hl" data-ua="AppsFlyer · 1.5р">AppsFlyer · 1.5y</span><span class="chip" data-ua="S2S-події">S2S events</span><span class="chip">Sentry</span><span class="chip" data-ua="AWS Athena · 1.5р">AWS Athena · 1.5y</span></div>
+        </div>
+        <div class="skill reveal">
+          <h3><span class="ic">CLI</span> <span data-ua="Збірка та інструменти">Build &amp; tools</span></h3>
+          <div class="chips"><span class="chip">esbuild</span><span class="chip">Webpack</span><span class="chip">npm</span><span class="chip hl" data-ua="Git · 3р">Git · 3y</span><span class="chip">GitHub</span><span class="chip">Confluence</span><span class="chip">ClickUp</span></div>
+        </div>
+        <div class="skill reveal">
+          <h3><span class="ic">AI</span> <span data-ua="AI-інструменти">AI coding tools</span></h3>
+          <div class="chips"><span class="chip">Codex</span><span class="chip">Claude Code</span><span class="chip">Gemini</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="experience">
+    <div class="wrap">
+      <div class="sec-head reveal"><span class="num">03</span><h2 data-ua="Досвід">Experience</h2><span class="rule"></span></div>
+      <div class="job">
+        <div class="job-meta reveal">
+          <h3>Game Developer</h3>
+          <p data-ua="Комерційні мобільні та веб-ігри">Commercial mobile &amp; web games</p>
+          <p data-ua="~2 роки · Геймдев">~2 years · Gamedev</p>
+          <div class="chips stack"><span class="chip">TypeScript</span><span class="chip">Three.js</span><span class="chip">WebGL</span><span class="chip">Rapier3D</span><span class="chip">Capacitor 8</span><span class="chip">esbuild</span></div>
+        </div>
+        <div class="areas">
+          <div class="area reveal"><div class="k">🎮</div><div><h4 data-ua="Геймплей та ігрові екрани">Gameplay &amp; game screens</h4><p data-ua="Геймплейні механіки, ігрові сутності, баланс, анімації та VFX. Повноцінні екрани з діалогами, оверлеями, підказками й переходами:">Gameplay mechanics, game entities, balance systems, animations and VFX. Complete screens with dialogs, overlays, tooltips and transitions:</p>
+            <div class="screens chips"><span class="chip" data-ua="Головне меню">Main menu</span><span class="chip" data-ua="Геймплей">Gameplay</span><span class="chip" data-ua="Магазин">Shop</span><span class="chip" data-ua="Таблиця лідерів">Leaderboard</span><span class="chip" data-ua="Режим пригод">Adventure mode</span><span class="chip" data-ua="Щоденні завдання">Daily tasks</span><span class="chip" data-ua="Вежа серії перемог">Win-streak tower</span></div></div></div>
+          <div class="area reveal"><div class="k">🧊</div><div><h4 data-ua="3D-сцени та фізика">3D scenes &amp; physics</h4><p data-ua="Сцени в Three.js з матеріалами, освітленням і тінями. Симуляції на Rapier3D: колайдери, вага об'єктів, швидкість руху, сила пробиття та взаємодія блоків, бар'єрів, бустерів, гармат і м'ячів.">Three.js scenes with materials, lighting and shadows. Rapier3D simulations: colliders, object weight, movement speed, penetration power, and interactions between blocks, barriers, boosters, cannons and balls.</p></div></div>
+          <div class="area reveal"><div class="k">🖼️</div><div><h4 data-ua="Власний WebGL UI-рендерер">Custom WebGL UI renderer</h4><p data-ua="Працював над власним 2D/UI-рендерером із кастомними шейдерами, nine-slice компонентами та адаптивним масштабуванням layout.">Worked on a custom 2D/UI renderer with custom shaders, nine-slice components and responsive layout scaling.</p></div></div>
+          <div class="area reveal"><div class="k">✨</div><div><h4 data-ua="Асети, медіа та відчуття гри">Assets, media &amp; feel</h4><p data-ua="FBX-моделі, текстури, атласи, шейдери, VFX, анімації польоту монет і екрана результатів, звукові ефекти, музика та тактильний відгук.">FBX models, textures, atlases, shaders, VFX, coin-fly and result-screen animations, sound effects, music and haptic feedback.</p></div></div>
+          <div class="area reveal"><div class="k">💎</div><div><h4 data-ua="Монетизація та воронки">Monetization &amp; funnels</h4><p data-ua="Спецпропозиції, mystery boxes, стартові набори, ігровий магазин, покупка бустерів і відключення реклами, rewarded-реклама, таймери та внутрішньоігрові покупки.">Special offers, mystery boxes, starter packs, in-game shop, booster and no-ads purchases, rewarded ads, countdowns and in-app purchases.</p></div></div>
+          <div class="area reveal"><div class="k">🔌</div><div><h4 data-ua="Бекенд, аналітика та дані">Backend, analytics &amp; data</h4><p data-ua="REST, HTTP і WebSockets; віддалені конфіги контенту, локальне сховище, офлайн-режим, синхронізація прогресу та локалізація через CSV. AppsFlyer, S2S-події та Sentry.">REST, HTTP and WebSockets; remote content configs, local storage, offline mode, progress sync and CSV-based localization. AppsFlyer, S2S events and Sentry.</p></div></div>
+          <div class="area reveal"><div class="k">📱</div><div><h4 data-ua="Реліз на платформи">Shipping to platforms</h4><p data-ua="Android-збірки з нативними плагінами Capacitor і Telegram Mini Apps — safe area, навігація, нативна кнопка «Назад».">Android builds with native Capacitor plugins and Telegram Mini Apps — safe-area handling, navigation, native back button.</p></div></div>
+          <div class="area reveal"><div class="k">⚡</div><div><h4 data-ua="Продуктивність і workflow">Performance &amp; workflow</h4><p data-ua="Профілював та оптимізував клієнт: прибрав зайві затримки, зменшив просідання FPS і фризи під час завантаження. Git-workflow з feature-гілками та окремими dev і production середовищами.">Profiled and optimized the client: removed unnecessary delays, reduced frame drops and loading hitches. Feature-branch Git workflow with separate dev and production environments.</p></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="projects">
+    <div class="wrap">
+      <div class="sec-head reveal"><span class="num">04</span><h2 data-ua="Проєкти">Projects</h2><span class="rule"></span></div>
+      <div class="projects">
+        <a class="project feature reveal" href="https://github.com/GABANCHIK" target="_blank" rel="noopener">
+          <span class="label" data-ua="// комерційні">// commercial</span>
+          <h3 data-ua="Мобільні та веб-ігри">Mobile &amp; web games</h3>
+          <p data-ua="2D та 3D ігри на TypeScript з Three.js, фізикою Rapier3D і власним WebGL UI — випущені на Android через Capacitor та як Telegram Mini Apps.">2D and 3D games built in TypeScript with Three.js, Rapier3D physics and a custom WebGL UI — shipped to Android via Capacitor and as Telegram Mini Apps.</p>
+          <div class="chips"><span class="chip">Three.js</span><span class="chip">Rapier3D</span><span class="chip">WebGL</span><span class="chip">Capacitor</span></div>
+        </a>
+        <a class="project reveal" href="https://github.com/GABANCHIK" target="_blank" rel="noopener">
+          <span class="label" data-ua="// особистий">// personal</span>
+          <h3 data-ua="Веб-застосунок · React / Redux / Firebase">Web app · React / Redux / Firebase</h3>
+          <p data-ua="Веб-застосунок з керуванням станом, збереженням і читанням даних з бази та GET/POST-запитами.">Web application with state management, database storage and retrieval, and GET/POST requests.</p>
+          <div class="chips"><span class="chip">React</span><span class="chip">Redux Thunk</span><span class="chip">Firebase</span><span class="chip">SCSS</span></div>
+          <span class="more" data-ua="Код на GitHub →">Source on GitHub →</span>
+        </a>
+        <div class="project reveal">
+          <span class="label" data-ua="// цей сайт">// this site</span>
+          <h3 data-ua="Інтерактивна 3D-сцена">Interactive hero scene</h3>
+          <p data-ua="Шапка сайту — невелика сцена на Three.js: поле блоків реагує на курсор, а кліком можна кинути на нього м'яч. Спробуйте.">The header is a small Three.js scene: a field of blocks reacting to your cursor, with balls you can drop on it. Click it and see.</p>
+          <div class="chips"><span class="chip">Three.js</span><span class="chip">Vanilla JS</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="education">
+    <div class="wrap">
+      <div class="sec-head reveal"><span class="num">05</span><h2 data-ua="Освіта та якості">Education &amp; qualities</h2><span class="rule"></span></div>
+      <div class="edu">
+        <div class="stat reveal">
+          <h3 data-ua="Вінницький національний технічний університет">Vinnytsia National Technical University</h3>
+          <p data-ua="Факультет інтелектуальних інформаційних технологій та автоматизації">Faculty of Intelligent Information Technologies and Automation</p>
+          <p style="margin-top:10px;color:var(--text)" data-ua="Комп'ютерна інженерія · бакалавр (навчаюсь)">Computer Engineering · Bachelor's (in progress)</p>
+        </div>
+        <div class="stat reveal">
+          <h3 data-ua="Особисті якості">Personal qualities</h3>
+          <div class="chips" style="margin-top:12px"><span class="chip" data-ua="Відповідальний">Responsible</span><span class="chip" data-ua="Уважний до деталей">Detail-oriented</span><span class="chip" data-ua="Швидко навчаюсь">Fast learner</span><span class="chip" data-ua="Комунікабельний">Strong communication</span><span class="chip" data-ua="Висока працездатність">High working capacity</span><span class="chip" data-ua="Пунктуальний">Punctual</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact">
+    <div class="wrap">
+      <div class="box reveal">
+        <h2 data-ua="Створімо гру разом.">Let's build a game.</h2>
+        <p data-ua="Шукаєте розробника на TypeScript / Three.js? Буду радий почути про ваш проєкт.">Looking for a TypeScript / Three.js developer? I'd love to hear about your project.</p>
+        <div class="contacts">
+          <a class="btn btn-primary" href="mailto:n.storchak06@gmail.com" data-copy="n.storchak06@gmail.com">n.storchak06@gmail.com</a>
+          <a class="btn btn-ghost" href="tel:+380978190088">+380 97 819 00 88</a>
+          <a class="btn btn-ghost" href="https://github.com/GABANCHIK" target="_blank" rel="noopener">github.com/GABANCHIK</a>
+        </div>
+        <div class="copy-note" id="copyNote"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© <span id="yr"></span> <span data-ua="Микола Сторчак">Mykola Storchak</span></span>
+    <span data-ua="Зроблено на Three.js">Built with Three.js</span>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+  document.getElementById('yr').textContent = new Date().getFullYear();
+
+  // ---------- Language switch ----------
+  const META = {
+    en: { title: 'Mykola Storchak — Game Developer', copied: 'email copied to clipboard' },
+    ua: { title: 'Микола Сторчак — Game Developer', copied: 'email скопійовано' },
+  };
+  const i18n = document.querySelectorAll('[data-ua]');
+  i18n.forEach(el => el.dataset.en = el.innerHTML);
+  let lang = 'en';
+  function setLang(l) {
+    lang = l;
+    i18n.forEach(el => el.innerHTML = el.dataset[l]);
+    document.documentElement.lang = l === 'ua' ? 'uk' : 'en';
+    document.title = META[l].title;
+    document.querySelectorAll('[data-lang]').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === l));
+    try { localStorage.setItem('lang', l); } catch (e) {}
+  }
+  document.querySelectorAll('[data-lang]').forEach(b => b.addEventListener('click', () => setLang(b.dataset.lang)));
+  let saved = null;
+  try { saved = localStorage.getItem('lang'); } catch (e) {}
+  setLang(saved || (/^(uk|ru)/i.test(navigator.language) ? 'ua' : 'en'));
+
+  // Nav border on scroll
+  const nav = document.getElementById('nav');
+  addEventListener('scroll', () => nav.classList.toggle('scrolled', scrollY > 20), { passive: true });
+
+  // Reveal on scroll
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+  }), { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  // Copy email alongside mailto
+  const note = document.getElementById('copyNote');
+  document.querySelectorAll('[data-copy]').forEach(a => a.addEventListener('click', () => {
+    navigator.clipboard?.writeText(a.dataset.copy).then(() => {
+      note.textContent = META[lang].copied;
+      setTimeout(() => note.textContent = '', 2000);
+    }).catch(() => {});
+  }));
+
+  // ---------- Hero scene ----------
+  if (typeof THREE === 'undefined') return;
+  const canvas = document.getElementById('scene');
+  const hero = document.getElementById('hero');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0x07080d, 18, 42);
+  const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
+  camera.position.set(6, 15, 19);
+
+  scene.add(new THREE.AmbientLight(0x8a7dff, 0.35));
+  const key = new THREE.DirectionalLight(0xffffff, 0.9);
+  key.position.set(8, 16, 6);
+  key.castShadow = true;
+  key.shadow.mapSize.set(1024, 1024);
+  Object.assign(key.shadow.camera, { left: -16, right: 16, top: 16, bottom: -16 });
+  scene.add(key);
+  const glow = new THREE.PointLight(0x7cf2c8, 2.2, 10);
+  scene.add(glow);
+
+  // Grid of blocks
+  const N = 26, S = 0.9;
+  const geo = new THREE.BoxGeometry(S * 0.9, 1, S * 0.9);
+  const mat = new THREE.MeshStandardMaterial({ roughness: 0.45, metalness: 0.25 });
+  const mesh = new THREE.InstancedMesh(geo, mat, N * N);
+  mesh.castShadow = mesh.receiveShadow = true;
+  scene.add(mesh);
+  const cells = [];
+  const cA = new THREE.Color(0x1a1f2e), cB = new THREE.Color(0x7cf2c8), cC = new THREE.Color(0x8a7dff), cHot = new THREE.Color(0xff6b8b);
+  for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
+    cells.push({ x: (i - N / 2) * S, z: (j - N / 2) * S, h: 0, v: 0, heat: 0 });
+  }
+  const dummy = new THREE.Object3D(), col = new THREE.Color();
+
+  // Balls
+  const ballGeo = new THREE.SphereGeometry(0.42, 24, 16);
+  const ballMat = new THREE.MeshStandardMaterial({ color: 0xff6b8b, emissive: 0xff2d5c, emissiveIntensity: 0.5, roughness: 0.3 });
+  const balls = [];
+  function dropBall(x, z) {
+    const m = new THREE.Mesh(ballGeo, ballMat);
+    m.castShadow = true;
+    m.position.set(x, 9, z);
+    scene.add(m);
+    balls.push({ m, vy: 0, vx: (Math.random() - .5) * 2, vz: (Math.random() - .5) * 2, life: 6 });
+    if (balls.length > 12) { const b = balls.shift(); scene.remove(b.m); }
+  }
+
+  // Pointer → ground plane
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(9, 9);
+  const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+  const hit = new THREE.Vector3(999, 0, 999);
+  let pointerIn = false;
+  function updatePointer(e) {
+    const r = canvas.getBoundingClientRect();
+    ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    pointerIn = true;
+  }
+  hero.addEventListener('pointermove', updatePointer);
+  hero.addEventListener('pointerleave', () => pointerIn = false);
+  hero.addEventListener('pointerdown', e => {
+    if (e.target.closest('a')) return;
+    updatePointer(e);
+    ray.setFromCamera(ndc, camera);
+    const p = new THREE.Vector3();
+    if (ray.ray.intersectPlane(plane, p)) dropBall(p.x, p.z);
+  });
+
+  function impulse(x, z, power, radius) {
+    for (const c of cells) {
+      const d = Math.hypot(c.x - x, c.z - z);
+      if (d < radius) { c.v -= power * (1 - d / radius); c.heat = Math.min(1, c.heat + (1 - d / radius)); }
+    }
+  }
+
+  function resize() {
+    const w = hero.clientWidth, h = hero.clientHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    // Shift the view so the grid sits on the right on wide screens, behind the text
+    const wide = w > 860;
+    camera.position.set(wide ? 2 : 0, 15, 19);
+    camera.lookAt(wide ? -4 : 0, 0, 0);
+    camera.updateProjectionMatrix();
+  }
+  addEventListener('resize', resize);
+  resize();
+
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let t = 0, last = performance.now(), auto = 0, visible = true;
+  new IntersectionObserver(([e]) => visible = e.isIntersecting).observe(hero);
+
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (!visible) { last = now; return; }
+    const dt = Math.min((now - last) / 1000, 0.033); last = now;
+    t += reduced ? dt * 0.2 : dt;
+
+    if (pointerIn) {
+      ray.setFromCamera(ndc, camera);
+      if (ray.ray.intersectPlane(plane, hit)) glow.position.set(hit.x, 2, hit.z);
+    } else {
+      hit.set(Math.sin(t * .4) * 7, 0, Math.cos(t * .3) * 6);
+      glow.position.set(hit.x, 2, hit.z);
+    }
+
+    // Idle rain so the scene is alive without input
+    auto -= dt;
+    if (auto < 0 && !reduced) { auto = 1.6 + Math.random() * 1.8; dropBall((Math.random() - .5) * N * S * .8, (Math.random() - .5) * N * S * .8); }
+
+    for (const b of balls) {
+      b.vy -= 22 * dt;
+      b.m.position.x += b.vx * dt; b.m.position.z += b.vz * dt; b.m.position.y += b.vy * dt;
+      const floor = 0.9;
+      if (b.m.position.y < floor && b.vy < 0) {
+        impulse(b.m.position.x, b.m.position.z, Math.min(-b.vy, 14) * 0.9, 3.2);
+        b.m.position.y = floor; b.vy *= -0.55;
+        if (Math.abs(b.vy) < 1.5) b.vy = 0;
+      }
+      b.life -= dt;
+      b.m.scale.setScalar(Math.max(0, Math.min(1, b.life)));
+    }
+    for (let k = balls.length - 1; k >= 0; k--) if (balls[k].life <= 0) { scene.remove(balls[k].m); balls.splice(k, 1); }
+
+    for (let i = 0; i < cells.length; i++) {
+      const c = cells[i];
+      const d = Math.hypot(c.x - hit.x, c.z - hit.z);
+      const lift = Math.max(0, 1 - d / 4) * 2.4;
+      const wave = Math.sin(c.x * .45 + t * 1.2) * Math.cos(c.z * .4 + t * .9) * .35;
+      const target = wave + lift;
+      c.v += (target - c.h) * 40 * dt; // spring
+      c.v *= Math.pow(0.02, dt);       // damping
+      c.h += c.v * dt;
+      c.heat *= Math.pow(0.15, dt);
+
+      const height = 1 + Math.max(-0.6, c.h);
+      dummy.position.set(c.x, height / 2 - 0.5, c.z);
+      dummy.scale.set(1, height, 1);
+      dummy.updateMatrix();
+      mesh.setMatrixAt(i, dummy.matrix);
+
+      const m = Math.min(1, Math.max(0, lift / 2.4 + c.h * .15));
+      col.copy(cA).lerp(m > .5 ? cB : cC, m);
+      col.lerp(cHot, c.heat * .8);
+      mesh.setColorAt(i, col);
+    }
+    mesh.instanceMatrix.needsUpdate = true;
+    mesh.instanceColor.needsUpdate = true;
+    renderer.render(scene, camera);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
